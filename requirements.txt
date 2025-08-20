@@ -1,5 +1,3 @@
 fastapi
-uvicorn
-supabase
+uvicorn[standard]
 paho-mqtt
-python-dotenv
