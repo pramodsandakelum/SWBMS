@@ -1,14 +1,15 @@
+// src/hooks/useMQTT.js
 import { useEffect, useRef, useState } from "react";
 import mqtt from "mqtt";
 import { supabase } from "../supabaseClient";
 
 const CHANGE_THRESHOLD = {
-    weight: 5,      // update if weight changes by >=5kg
-    fullness: 3,    // update if fullness changes by >=3%
+    weight: 5,
+    fullness: 3,
 };
 
 export const useMQTT = (topic = "smartbin/data") => {
-    const [messages, setMessages] = useState([]);
+    const [bins, setBins] = useState([]);
     const binMapRef = useRef(new Map());
     const queueRef = useRef([]);
     const clientRef = useRef(null);
@@ -22,10 +23,11 @@ export const useMQTT = (topic = "smartbin/data") => {
                 keepalive: 60,
             }
         );
+
         clientRef.current = client;
 
         client.on("connect", () => {
-            console.log("✅ Connected to HiveMQ Cloud");
+            console.log("Connected to HiveMQ Cloud");
             client.subscribe(topic);
         });
 
@@ -34,7 +36,7 @@ export const useMQTT = (topic = "smartbin/data") => {
                 const data = JSON.parse(payload.toString());
                 queueRef.current.push(data);
 
-                // Insert/update bin metadata
+                // Insert/update in Supabase
                 const { data: binData } = await supabase
                     .from("bins")
                     .select("id")
@@ -42,29 +44,32 @@ export const useMQTT = (topic = "smartbin/data") => {
                     .single();
 
                 if (!binData) {
-                    await supabase.from("bins").insert([{
-                        id: data.id,
-                        location_name: data.location_name,
-                        latitude: data.latitude,
-                        longitude: data.longitude,
-                    }]);
+                    await supabase.from("bins").insert([
+                        {
+                            id: data.id,
+                            location_name: data.location_name,
+                            latitude: data.latitude,
+                            longitude: data.longitude,
+                        },
+                    ]);
                 }
 
-                // Insert new reading
-                await supabase.from("readings").insert([{
-                    bin_id: data.id,
-                    weight_kg: data.weight,
-                    fullness_percent: data.fullness,
-                }]);
+                await supabase.from("readings").insert([
+                    {
+                        bin_id: data.id,
+                        weight_kg: data.weight,
+                        fullness_percent: data.fullness,
+                    },
+                ]);
             } catch (err) {
-                console.error("❌ MQTT parse/Supabase error", err);
+                console.error("MQTT parse or Supabase error", err);
             }
         });
 
         return () => client.end(true);
     }, [topic]);
 
-    // batch updates every 2 seconds
+    // batch updates every 2s for performance
     useEffect(() => {
         const interval = setInterval(() => {
             if (queueRef.current.length > 0) {
@@ -80,11 +85,10 @@ export const useMQTT = (topic = "smartbin/data") => {
                         binMapRef.current.set(bin.id, bin);
                     }
                 });
-
                 queueRef.current = [];
 
                 if (updates.length > 0) {
-                    setMessages((prev) => {
+                    setBins((prev) => {
                         const map = new Map(prev.map((b) => [b.id, b]));
                         updates.forEach((b) => map.set(b.id, b));
                         return Array.from(map.values());
@@ -96,5 +100,5 @@ export const useMQTT = (topic = "smartbin/data") => {
         return () => clearInterval(interval);
     }, []);
 
-    return messages;
+    return bins;
 };
