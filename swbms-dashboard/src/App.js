@@ -1,15 +1,17 @@
 import React from "react";
-import { Container, Typography } from "@mui/material";
-import BinMap from "./components/MapContainer";
+import { useMQTT } from "./hooks/useMQTT";
+import Dashboard from "./components/Dashboard";
 
 function App() {
+  const bins = useMQTT();
+
   return (
-    <Container>
-      <Typography variant="h4" align="center" gutterBottom>
-        SWBMS Live Bin Map
-      </Typography>
-      <BinMap />
-    </Container>
+    <div>
+      <h1 className="text-2xl font-bold text-center p-4 bg-green-600 text-white">
+        Smart Waste Bin Dashboard
+      </h1>
+      <Dashboard bins={bins} />
+    </div>
   );
 }
 

@@ -1,41 +1,99 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import mqtt from "mqtt";
+import { supabase } from "../supabaseClient";
 
-const MQTT_BROKER = "wss://c1f5ac9342c94c8483a19f93a4baff51.s1.eu.hivemq.cloud:8884/mqtt";
-const MQTT_USER = "mqtt_admin";
-const MQTT_PASS = "Mqttadmin123";
-const MQTT_TOPIC = "smartbin/data";
+const CHANGE_THRESHOLD = {
+    weight: 5,      // update if weight changes by >=5kg
+    fullness: 3,    // update if fullness changes by >=3%
+};
 
-export const useMQTT = () => {
+export const useMQTT = (topic = "smartbin/data") => {
     const [messages, setMessages] = useState([]);
+    const binMapRef = useRef(new Map());
+    const queueRef = useRef([]);
+    const clientRef = useRef(null);
 
     useEffect(() => {
-        const client = mqtt.connect(MQTT_BROKER, {
-            username: MQTT_USER,
-            password: MQTT_PASS,
-        });
+        const client = mqtt.connect(
+            "wss://c1f5ac9342c94c8483a19f93a4baff51.s1.eu.hivemq.cloud:8884/mqtt",
+            {
+                username: "mqtt_admin",
+                password: "Mqttadmin123",
+                keepalive: 60,
+            }
+        );
+        clientRef.current = client;
 
         client.on("connect", () => {
-            console.log("Connected to HiveMQ MQTT WebSocket");
-            client.subscribe(MQTT_TOPIC);
+            console.log("✅ Connected to HiveMQ Cloud");
+            client.subscribe(topic);
         });
 
-        client.on("message", (topic, payload) => {
+        client.on("message", async (_, payload) => {
             try {
                 const data = JSON.parse(payload.toString());
-                setMessages((prev) => [data, ...prev].slice(0, 200)); // keep last 200
+                queueRef.current.push(data);
+
+                // Insert/update bin metadata
+                const { data: binData } = await supabase
+                    .from("bins")
+                    .select("id")
+                    .eq("id", data.id)
+                    .single();
+
+                if (!binData) {
+                    await supabase.from("bins").insert([{
+                        id: data.id,
+                        location_name: data.location_name,
+                        latitude: data.latitude,
+                        longitude: data.longitude,
+                    }]);
+                }
+
+                // Insert new reading
+                await supabase.from("readings").insert([{
+                    bin_id: data.id,
+                    weight_kg: data.weight,
+                    fullness_percent: data.fullness,
+                }]);
             } catch (err) {
-                console.error("Invalid MQTT message:", err);
+                console.error("❌ MQTT parse/Supabase error", err);
             }
         });
 
-        client.on("error", (err) => {
-            console.error("MQTT Error:", err);
-        });
+        return () => client.end(true);
+    }, [topic]);
 
-        return () => {
-            client.end();
-        };
+    // batch updates every 2 seconds
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (queueRef.current.length > 0) {
+                const updates = [];
+                queueRef.current.forEach((bin) => {
+                    const prev = binMapRef.current.get(bin.id);
+                    if (
+                        !prev ||
+                        Math.abs(bin.weight - prev.weight) >= CHANGE_THRESHOLD.weight ||
+                        Math.abs(bin.fullness - prev.fullness) >= CHANGE_THRESHOLD.fullness
+                    ) {
+                        updates.push(bin);
+                        binMapRef.current.set(bin.id, bin);
+                    }
+                });
+
+                queueRef.current = [];
+
+                if (updates.length > 0) {
+                    setMessages((prev) => {
+                        const map = new Map(prev.map((b) => [b.id, b]));
+                        updates.forEach((b) => map.set(b.id, b));
+                        return Array.from(map.values());
+                    });
+                }
+            }
+        }, 2000);
+
+        return () => clearInterval(interval);
     }, []);
 
     return messages;
