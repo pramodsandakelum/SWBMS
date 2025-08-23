@@ -81,20 +81,15 @@ const BinMap = () => {
 
     // Create custom icons with better styling
     const createCustomIcon = (fullness) => {
-        let iconColor = 'blue';
         let iconUrl = "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png";
 
         if (fullness >= 75) {
-            iconColor = 'red';
             iconUrl = "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png";
         } else if (fullness >= 50) {
-            iconColor = 'orange';
             iconUrl = "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png";
         } else if (fullness >= 25) {
-            iconColor = 'yellow';
             iconUrl = "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-yellow.png";
         } else {
-            iconColor = 'green';
             iconUrl = "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png";
         }
 
@@ -118,68 +113,72 @@ const BinMap = () => {
 
     const handleClose = () => setAlertBin(null);
 
-    // Custom popup content
+    // Helper functions for popup styling
+    const getStatusColor = (fullness) => {
+        if (fullness >= 75) return '#ef4444';
+        if (fullness >= 50) return '#f59e0b';
+        if (fullness >= 25) return '#eab308';
+        return '#10b981';
+    };
+
+    const getStatusText = (fullness) => {
+        if (fullness >= 75) return 'Full';
+        if (fullness >= 50) return 'Half Full';
+        if (fullness >= 25) return 'Partial';
+        return 'Empty';
+    };
+
+    // Generate HTML string for popup content
     const getPopupContent = (bin) => {
-        const getStatusColor = (fullness) => {
-            if (fullness >= 75) return '#ef4444';
-            if (fullness >= 50) return '#f59e0b';
-            if (fullness >= 25) return '#eab308';
-            return '#10b981';
-        };
+        const statusColor = getStatusColor(bin.fullness);
+        const statusText = getStatusText(bin.fullness);
 
-        const getStatusText = (fullness) => {
-            if (fullness >= 75) return 'Full';
-            if (fullness >= 50) return 'Half Full';
-            if (fullness >= 25) return 'Partial';
-            return 'Empty';
-        };
-
-        return (
-            <div style={{ minWidth: '200px', padding: '8px' }}>
-                <div style={{
-                    fontSize: '14px',
-                    fontWeight: 'bold',
-                    marginBottom: '8px',
-                    color: '#1f2937'
-                }}>
-                    📍 {bin.location_name}
+        return `
+            <div style="min-width: 200px; padding: 8px; font-family: Arial, sans-serif;">
+                <div style="
+                    font-size: 14px;
+                    font-weight: bold;
+                    margin-bottom: 8px;
+                    color: #1f2937;
+                ">
+                    📍 ${bin.location_name || 'Unknown Location'}
                 </div>
 
-                <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>
-                    <strong>Weight:</strong> {bin.weight} kg
+                <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">
+                    <strong>Weight:</strong> ${bin.weight || 0} kg
                 </div>
 
-                <div style={{
-                    fontSize: '12px',
-                    marginBottom: '8px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px'
-                }}>
+                <div style="
+                    font-size: 12px;
+                    margin-bottom: 8px;
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
+                ">
                     <strong>Fullness:</strong>
-                    <span style={{
-                        color: getStatusColor(bin.fullness),
-                        fontWeight: 'bold'
-                    }}>
-                        {bin.fullness}%
+                    <span style="
+                        color: ${statusColor};
+                        font-weight: bold;
+                    ">
+                        ${bin.fullness || 0}%
                     </span>
-                    <span style={{
-                        backgroundColor: getStatusColor(bin.fullness),
-                        color: 'white',
-                        padding: '2px 6px',
-                        borderRadius: '4px',
-                        fontSize: '10px',
-                        fontWeight: 'bold'
-                    }}>
-                        {getStatusText(bin.fullness)}
+                    <span style="
+                        background-color: ${statusColor};
+                        color: white;
+                        padding: 2px 6px;
+                        border-radius: 4px;
+                        font-size: 10px;
+                        font-weight: bold;
+                    ">
+                        ${statusText}
                     </span>
                 </div>
 
-                <div style={{ fontSize: '10px', color: '#9ca3af' }}>
-                    ID: {bin.id}
+                <div style="font-size: 10px; color: #9ca3af;">
+                    ID: ${bin.id || 'N/A'}
                 </div>
             </div>
-        );
+        `;
     };
 
     if (!bins || bins.length === 0) {

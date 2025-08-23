@@ -11,9 +11,9 @@ import TrendsChart from "./TrendsChart";
 const Dashboard = ({ bins }) => {
     return (
         <Box sx={{
-            backgroundColor: "#f1f5f9",
-            minHeight: "100vh",
-            padding: { xs: 2, md: 3 }
+            backgroundColor: "transparent",
+            minHeight: "auto",
+            padding: 0
         }}>
             {/* ROW 1: Map Section - Full Width */}
             <Box sx={{ marginBottom: 4 }}>
@@ -30,15 +30,15 @@ const Dashboard = ({ bins }) => {
                     {/* Map Header */}
                     <Box sx={{
                         padding: 3,
-                        borderBottom: '1px solid #e2e8f0',
-                        backgroundColor: '#ffffff'
+                        borderBottom: '1px solid #30363d',
+                        backgroundColor: '#161b22'
                     }}>
                         <Typography
                             variant="h4"
                             sx={{
-                                fontWeight: 700,
-                                color: "#0f172a",
-                                fontSize: { xs: '1.5rem', md: '2rem' }
+                                fontWeight: 600,
+                                color: "#f0f6fc",
+                                fontSize: { xs: '1.25rem', md: '1.5rem' }
                             }}
                         >
                             Real-time Bin Map
@@ -46,7 +46,7 @@ const Dashboard = ({ bins }) => {
                         <Typography
                             variant="subtitle1"
                             sx={{
-                                color: "#64748b",
+                                color: "#7c8591",
                                 marginTop: 0.5
                             }}
                         >
@@ -122,8 +122,23 @@ const Dashboard = ({ bins }) => {
                         }}
                     >
                         <Box sx={{
-                            flex: 1,
                             padding: 3,
+                            borderBottom: '1px solid #30363d'
+                        }}>
+                            <Typography
+                                variant="h6"
+                                sx={{
+                                    fontWeight: 600,
+                                    color: "#f0f6fc",
+                                    fontSize: '1.125rem'
+                                }}
+                            >
+                                Fullness Distribution
+                            </Typography>
+                        </Box>
+                        <Box sx={{
+                            padding: 3,
+                            flex: 1,
                             display: 'flex',
                             alignItems: 'center'
                         }}>
@@ -132,40 +147,79 @@ const Dashboard = ({ bins }) => {
                     </Paper>
                 </Grid>
 
+                {/* Column 3: Trends Chart */}
+                <Grid item xs={12} md={4}>
+                    <Paper
+                        elevation={1}
+                        sx={{
+                            height: 450,
+                            borderRadius: 4,
+                            overflow: 'hidden',
+                            border: '1px solid #e2e8f0',
+                            backgroundColor: '#ffffff',
+                            display: 'flex',
+                            flexDirection: 'column'
+                        }}
+                    >
+                        <Box sx={{
+                            padding: 3,
+                            borderBottom: '1px solid #e2e8f0'
+                        }}>
+                            <Typography
+                                variant="h5"
+                                sx={{
+                                    fontWeight: 700,
+                                    color: "#0f172a",
+                                    fontSize: { xs: '1.25rem', md: '1.5rem' }
+                                }}
+                            >
+                                Usage Trends
+                            </Typography>
+                        </Box>
+                        <Box sx={{
+                            padding: 3,
+                            flex: 1,
+                            display: 'flex',
+                            alignItems: 'center'
+                        }}>
+                            <TrendsChart bins={bins} />
+                        </Box>
+                    </Paper>
+                </Grid>
 
             </Grid>
 
             {/* ROW 3: Bin Status Table - Full Width */}
             <Box>
                 <Paper
-                    elevation={1}
+                    elevation={0}
                     sx={{
-                        borderRadius: 4,
+                        borderRadius: 3,
                         overflow: 'hidden',
-                        border: '1px solid #e2e8f0',
-                        backgroundColor: '#ffffff'
+                        border: '1px solid #30363d',
+                        backgroundColor: '#161b22'
                     }}
                 >
                     {/* Table Header */}
                     <Box sx={{
                         padding: 3,
-                        borderBottom: '1px solid #e2e8f0',
-                        backgroundColor: '#ffffff'
+                        borderBottom: '1px solid #30363d',
+                        backgroundColor: '#161b22'
                     }}>
                         <Typography
-                            variant="h4"
+                            variant="h5"
                             sx={{
-                                fontWeight: 700,
-                                color: "#0f172a",
-                                fontSize: { xs: '1.5rem', md: '2rem' }
+                                fontWeight: 600,
+                                color: "#f0f6fc",
+                                fontSize: { xs: '1.25rem', md: '1.375rem' }
                             }}
                         >
                             Bin Status Overview
                         </Typography>
                         <Typography
-                            variant="subtitle1"
+                            variant="body1"
                             sx={{
-                                color: "#64748b",
+                                color: "#7c8591",
                                 marginTop: 0.5
                             }}
                         >

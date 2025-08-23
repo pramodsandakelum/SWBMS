@@ -44,25 +44,26 @@ const KPICards = ({ bins = [] }) => {
 
     return (
         <Box sx={{ width: '100%' }}>
-            <Grid container spacing={2}>
+            <Grid container spacing={1.5} direction="column">
                 {kpis.map((kpi, index) => (
-                    <Grid item xs={6} sm={6} md={12} lg={6} xl={6} key={kpi.label}>
+                    <Grid item xs={12} key={kpi.label}>
                         <Paper
                             elevation={0}
                             sx={{
-                                padding: 2,
-                                textAlign: "left",
+                                padding: 1.5,
+                                textAlign: "center",
                                 backgroundColor: kpi.bgColor,
                                 border: `1px solid ${kpi.color}20`,
-                                borderRadius: 3,
-                                height: 80,
+                                borderRadius: 2,
+                                height: 65,
                                 display: 'flex',
                                 flexDirection: 'column',
-                                justifyContent: 'space-between',
+                                justifyContent: 'center',
+                                alignItems: 'center',
                                 transition: 'all 0.2s ease-in-out',
                                 '&:hover': {
-                                    transform: 'translateY(-2px)',
-                                    boxShadow: `0 4px 12px ${kpi.color}20`,
+                                    transform: 'translateY(-1px)',
+                                    boxShadow: `0 2px 8px ${kpi.color}15`,
                                 }
                             }}
                         >
@@ -71,21 +72,22 @@ const KPICards = ({ bins = [] }) => {
                                 sx={{
                                     color: kpi.color,
                                     fontWeight: 600,
-                                    fontSize: '0.75rem',
+                                    fontSize: '0.65rem',
                                     textTransform: 'uppercase',
-                                    letterSpacing: '0.5px'
+                                    letterSpacing: '0.3px',
+                                    lineHeight: 1,
+                                    marginBottom: 0.5
                                 }}
                             >
                                 {kpi.label}
                             </Typography>
                             <Typography
-                                variant="h4"
+                                variant="h6"
                                 sx={{
                                     fontWeight: 700,
                                     color: kpi.color,
-                                    fontSize: '1.75rem',
+                                    fontSize: '1.25rem',
                                     lineHeight: 1,
-                                    marginTop: 0.5
                                 }}
                             >
                                 {kpi.value}

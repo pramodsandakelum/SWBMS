@@ -19,7 +19,7 @@ export default function BinTable() {
             <Table stickyHeader>
                 <TableHead>
                     <TableRow>
-                        <TableCell><b>Bin ID</b></TableCell>
+
                         <TableCell><b>Location</b></TableCell>
                         <TableCell><b>Weight (kg)</b></TableCell>
                         <TableCell><b>Fullness (%)</b></TableCell>
@@ -36,7 +36,7 @@ export default function BinTable() {
                     ) : (
                         bins.map((bin) => (
                             <TableRow key={bin.id}>
-                                <TableCell>{bin.id}</TableCell>
+
                                 <TableCell>{bin.location_name}</TableCell>
                                 <TableCell>{bin.weight}</TableCell>
                                 <TableCell>{bin.fullness}</TableCell>

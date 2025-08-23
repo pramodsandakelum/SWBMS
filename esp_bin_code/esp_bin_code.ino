@@ -18,8 +18,8 @@ const char* mqtt_topic = "smartbin/data";
 #define DOUT 4
 #define CLK 5
 HX711 scale;
-float calibration_factor = 729.86f; // calibrated factor
-float bin_capacity = 1000.0f;       // 1kg max
+float calibration_factor = 729.86f; //calibaration factor
+float bin_capacity = 1000.0f;       // 1kg
 
 // ---------------- NeoPixel ----------------
 #define PIXEL_PIN 2
@@ -38,7 +38,7 @@ unsigned long lastBlink = 0;
 bool blinkState = false;
 
 unsigned long lastMQTTPublish = 0;
-const unsigned long mqttInterval = 2000; // Publish every 2 sec
+const unsigned long mqttInterval = 5000; // Publish every 2 sec development environment
 
 // ---------------- BIN DEFINITIONS ----------------
 struct Bin {
