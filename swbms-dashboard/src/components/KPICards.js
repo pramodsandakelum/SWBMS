@@ -1,6 +1,11 @@
-// src/components/KPICards.js
 import React from "react";
-import { Grid, Paper, Typography, Box } from "@mui/material";
+import { Grid, Paper, Typography } from "@mui/material";
+import {
+    Assessment,
+    Delete,
+    TrendingUp,
+    Scale,
+} from "@mui/icons-material";
 
 const KPICards = ({ bins = [] }) => {
     // Compute KPIs safely
@@ -19,84 +24,98 @@ const KPICards = ({ bins = [] }) => {
         {
             label: "Total Bins",
             value: totalBins,
-            color: "#3b82f6",
-            bgColor: "#eff6ff"
+            color: "text-blue-400",
+            bg: "bg-blue-500/20",
+            border: "border-blue-500/30",
+            bar: "bg-blue-400",
+            icon: Assessment,
         },
         {
-            label: "Full Bins (>=75%)",
+            label: "Full Bins",
             value: fullBins,
-            color: "#ef4444",
-            bgColor: "#fef2f2"
+            color: "text-red-400",
+            bg: "bg-red-500/20",
+            border: "border-red-500/30",
+            bar: "bg-red-400",
+            icon: Delete,
         },
         {
-            label: "Avg Fullness (%)",
+            label: "Avg Fullness",
             value: `${avgFullness}%`,
-            color: "#f59e0b",
-            bgColor: "#fefbeb"
+            color: "text-yellow-400",
+            bg: "bg-yellow-500/20",
+            border: "border-yellow-500/30",
+            bar: "bg-yellow-400",
+            icon: TrendingUp,
         },
         {
-            label: "Avg Weight (kg)",
-            value: `${avgWeight}`,
-            color: "#10b981",
-            bgColor: "#f0fdf4"
+            label: "Avg Weight",
+            value: `${avgWeight} kg`,
+            color: "text-emerald-400",
+            bg: "bg-emerald-500/20",
+            border: "border-emerald-500/30",
+            bar: "bg-emerald-400",
+            icon: Scale,
         },
     ];
 
     return (
-        <Box sx={{ width: '100%' }}>
-            <Grid container spacing={1.5} direction="column">
-                {kpis.map((kpi, index) => (
-                    <Grid item xs={12} key={kpi.label}>
-                        <Paper
-                            elevation={0}
-                            sx={{
-                                padding: 1.5,
-                                textAlign: "center",
-                                backgroundColor: kpi.bgColor,
-                                border: `1px solid ${kpi.color}20`,
-                                borderRadius: 2,
-                                height: 65,
-                                display: 'flex',
-                                flexDirection: 'column',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                transition: 'all 0.2s ease-in-out',
-                                '&:hover': {
-                                    transform: 'translateY(-1px)',
-                                    boxShadow: `0 2px 8px ${kpi.color}15`,
-                                }
-                            }}
-                        >
-                            <Typography
-                                variant="caption"
-                                sx={{
-                                    color: kpi.color,
-                                    fontWeight: 600,
-                                    fontSize: '0.65rem',
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.3px',
-                                    lineHeight: 1,
-                                    marginBottom: 0.5
-                                }}
+        <div className="w-full h-full">
+            <div className="grid grid-cols-2 gap-3 h-full">
+                {kpis.map((kpi) => {
+                    const IconComponent = kpi.icon;
+                    return (
+                        <div key={kpi.label} className="h-full">
+                            <Paper
+                                elevation={0}
+                                className={`
+                  relative bg-slate-800/80 backdrop-blur-sm 
+                  border ${kpi.border} rounded-xl p-3 h-full
+                  flex items-center gap-3 overflow-hidden
+                  transition-all duration-300 cursor-pointer
+                  group hover:scale-[1.02]
+                `}
                             >
-                                {kpi.label}
-                            </Typography>
-                            <Typography
-                                variant="h6"
-                                sx={{
-                                    fontWeight: 700,
-                                    color: kpi.color,
-                                    fontSize: '1.25rem',
-                                    lineHeight: 1,
-                                }}
-                            >
-                                {kpi.value}
-                            </Typography>
-                        </Paper>
-                    </Grid>
-                ))}
-            </Grid>
-        </Box>
+                                {/* Glow overlay */}
+                                <div
+                                    className={`absolute inset-0 ${kpi.bg} opacity-0 group-hover:opacity-100 transition-opacity duration-500`}
+                                />
+
+                                {/* Icon */}
+                                <div
+                                    className={`
+                    w-10 h-10 rounded-lg ${kpi.bg} border ${kpi.border} 
+                    flex items-center justify-center
+                    transition-transform duration-300 group-hover:scale-110 relative z-10
+                  `}
+                                >
+                                    <IconComponent className={`text-lg ${kpi.color}`} />
+                                </div>
+
+                                {/* Text Content */}
+                                <div className="flex-1 relative z-10">
+                                    <Typography
+                                        variant="body2"
+                                        className="text-slate-400 text-xs font-medium uppercase tracking-wider mb-1"
+                                    >
+                                        {kpi.label}
+                                    </Typography>
+                                    <Typography
+                                        variant="h6"
+                                        className={`font-bold ${kpi.color} text-lg font-mono leading-tight`}
+                                    >
+                                        {kpi.value}
+                                    </Typography>
+                                </div>
+
+                                {/* Status bar */}
+                                <div className={`w-1 h-8 rounded-full ${kpi.bar} opacity-70 relative z-10`} />
+                            </Paper>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
     );
 };
 

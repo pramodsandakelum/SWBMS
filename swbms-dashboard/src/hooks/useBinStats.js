@@ -47,18 +47,44 @@ export default function useBinStats(hoursBack = 12) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [hoursBack]);
 
-    // compute latest status per bin + pie + trend
-    const { kpis, pieData, trendData } = useMemo(() => {
+    // compute latest status per bin + pie + trend + combined bins
+    const { kpis, pieData, trendData, combinedBins } = useMemo(() => {
         // latest reading per bin
         const latestByBin = new Map();
         for (const r of readings) {
             latestByBin.set(r.bin_id, r);
         }
 
+        // Create combined bins with latest readings
+        const combinedBins = bins.map(bin => {
+            const latestReading = latestByBin.get(bin.id);
+            const fullness = latestReading ? Number(latestReading.fullness_percent || 0) : 0;
+            const weight = latestReading ? Number(latestReading.weight_kg || 0) : 0;
+
+            return {
+                id: bin.id,
+                location: bin.location_name,
+                latitude: bin.latitude,
+                longitude: bin.longitude,
+                fullness: fullness,
+                weight: weight,
+                lastUpdated: latestReading
+                    ? new Date(latestReading.recorded_at).toLocaleTimeString("en-US", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: false
+                    })
+                    : 'Never',
+                status: fullness > 90 ? 'Critical' :
+                    fullness > 75 ? 'Full' :
+                        fullness > 50 ? 'Partial' :
+                            weight > 0 ? 'Active' : 'Normal'
+            };
+        });
+
         let full = 0, half = 0, normal = 0;
-        bins.forEach((b) => {
-            const r = latestByBin.get(b.id);
-            const f = r ? Number(r.fullness_percent || 0) : 0;
+        combinedBins.forEach((bin) => {
+            const f = bin.fullness;
             if (f >= 80) full += 1;
             else if (f >= 40) half += 1;
             else normal += 1;
@@ -95,8 +121,18 @@ export default function useBinStats(hoursBack = 12) {
                 avgFullness: count ? +(sum / count).toFixed(1) : 0,
             }));
 
-        return { kpis, pieData, trendData };
+        return { kpis, pieData, trendData, combinedBins };
     }, [bins, readings]);
 
-    return { loading, error, bins, readings, kpis, pieData, trendData, refresh: fetchAll };
+    return {
+        loading,
+        error,
+        bins: combinedBins, // Return combined bins instead of raw bins
+        rawBins: bins, // Keep raw bins available if needed
+        readings,
+        kpis,
+        pieData,
+        trendData,
+        refresh: fetchAll
+    };
 }
