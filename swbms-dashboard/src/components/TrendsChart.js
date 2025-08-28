@@ -149,9 +149,7 @@ export default function TrendsChart({ bins = [] }) {
             {/* Header with Stats - More compact */}
             <div className="flex justify-between items-center mb-2">
                 <div>
-                    <Typography variant="h6" className="font-semibold text-slate-100 text-sm mb-0.5">
-                        Performance Metrics
-                    </Typography>
+
                     <Typography variant="caption" className="text-slate-400 text-xs">
                         12-hour window
                     </Typography>
