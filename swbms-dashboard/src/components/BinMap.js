@@ -301,7 +301,7 @@ const BinMap = ({ bins }) => {
                         </MapContainer>
                     </div>
 
-                    {/* Footer Info - matching app footer style */}
+                    {/* Footer*/}
                     <div className="mt-4 flex justify-between items-center text-sm text-slate-400">
                         <div className="font-medium">
                             Last updated: {new Date().toLocaleTimeString()}

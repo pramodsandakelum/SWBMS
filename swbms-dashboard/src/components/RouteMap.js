@@ -72,39 +72,77 @@ const truckIcon = L.divIcon({
     iconAnchor: [16, 16],
 });
 
+
 const RouteMap = ({ bins }) => {
     const mapRef = useRef();
     const [route, setRoute] = useState([]);
     const [totalDistance, setTotalDistance] = useState(0);
     const truckStart = [7.094028, 79.997123];
+    const ORS_API_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjBjYjkyNWQzMzZjNDQ2OThhMTk0NTQ2YjNjNWRhZjgxIiwiaCI6Im11cm11cjY0In0=";
+
+
+    // -------------------
+    // Fetch route from OpenRouteService
+    // -------------------
+    const fetchORSRoute = async (start, end) => {
+        const url = "https://api.openrouteservice.org/v2/directions/driving-car/geojson";
+        try {
+            const res = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "Authorization": ORS_API_KEY,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    coordinates: [
+                        [start[1], start[0]], // [lng, lat]
+                        [end[1], end[0]]
+                    ]
+                })
+            });
+            const data = await res.json();
+            return data.features[0].geometry.coordinates.map(coord => [coord[1], coord[0]]); // convert to [lat, lng]
+        } catch (err) {
+            console.error("ORS route fetch failed", err);
+            return [start, end]; // fallback straight line
+        }
+    };
 
     const handleGenerateRoute = async () => {
         try {
-            const res = await fetch(
-                "https://swbms-route-generator.onrender.com/generate_route",
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        truck_start: truckStart,
-                        bins: bins.map((b) => ({
-                            id: b.id,
-                            latitude: b.latitude,
-                            longitude: b.longitude,
-                            fullness: b.fullness,
-                        })),
-                    }),
-                }
-            );
-            const data = await res.json();
-            setRoute(data.route);
-            setTotalDistance(data.total_distance_km);
+            // Filter bins >=50% fullness
+            const binsToVisit = bins.filter(b => b.fullness >= 75);
 
-            if (mapRef.current && data.route.length > 0) {
-                const bounds = data.route.map((b) => [b.latitude, b.longitude]);
-                bounds.push(truckStart);
-                mapRef.current.fitBounds(bounds, { padding: [40, 40] });
+            if (!binsToVisit.length) {
+                setRoute([]);
+                setTotalDistance(0);
+                return;
             }
+
+            let currentPos = truckStart;
+            const fullRoute = [];
+            let distanceSum = 0;
+
+            for (let b of binsToVisit) {
+                // Get ORS route for each segment
+                const segment = await fetchORSRoute(currentPos, [b.latitude, b.longitude]);
+                fullRoute.push(...segment);
+
+                // calculate simple distance sum (straight-line)
+                const dx = currentPos[0] - b.latitude;
+                const dy = currentPos[1] - b.longitude;
+                distanceSum += Math.sqrt(dx * dx + dy * dy) * 111; // approx km
+
+                currentPos = [b.latitude, b.longitude];
+            }
+
+            setRoute(fullRoute);
+            setTotalDistance(distanceSum.toFixed(2));
+
+            if (mapRef.current && fullRoute.length > 0) {
+                mapRef.current.fitBounds(fullRoute, { padding: [40, 40] });
+            }
+
         } catch (err) {
             console.error("Failed to generate route", err);
         }
@@ -128,9 +166,7 @@ const RouteMap = ({ bins }) => {
                         zoom={14}
                         scrollWheelZoom={true}
                         style={{ height: "100%", width: "100%" }}
-                        whenCreated={(mapInstance) => {
-                            mapRef.current = mapInstance;
-                        }}
+                        whenCreated={map => mapRef.current = map}
                     >
                         <TileLayer
                             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -139,55 +175,36 @@ const RouteMap = ({ bins }) => {
 
                         {/* Truck Start */}
                         <Marker position={truckStart} icon={truckIcon}>
-                            <Popup>
-                                <div className="p-2 bg-slate-900 rounded-lg border border-slate-700 shadow-md">
-                                    <div className="flex items-center space-x-2">
-                                        <LocalShipping className="text-emerald-400 text-base" />
-                                        <span className="text-slate-50 font-semibold">Truck Start</span>
-                                    </div>
-                                </div>
-                            </Popup>
+                            <Popup>Truck Start</Popup>
                         </Marker>
 
                         {/* Bins */}
-                        {bins.map((bin) => (
+                        {bins.map(b => (
                             <Marker
-                                key={bin.id}
-                                position={[bin.latitude, bin.longitude]}
-                                icon={createCustomIcon(bin.fullness)}
+                                key={b.id}
+                                position={[b.latitude, b.longitude]}
+                                icon={createCustomIcon(b.fullness)}
                             >
                                 <Popup>
-                                    <div className="p-3 bg-slate-900 rounded-lg border border-slate-700 shadow-md space-y-2 min-w-[220px]">
-                                        <div className="flex items-center space-x-2">
-                                            <LocationOn className="text-emerald-400 text-base" />
-                                            <span className="text-slate-50 font-semibold">{bin.location_name}</span>
-                                        </div>
-                                        <Chip
-                                            label={`Fullness: ${bin.fullness}%`}
-                                            size="small"
-                                            className={`bg-slate-800/50 text-emerald-400 border border-slate-700 text-xs font-medium`}
-                                        />
-                                        <div className="text-slate-300 text-sm">Weight: {bin.weight} kg</div>
+                                    <div>
+                                        <strong>{b.location_name}</strong><br />
+                                        Fullness: {b.fullness}%<br />
+                                        Weight: {b.weight} kg
                                     </div>
                                 </Popup>
                             </Marker>
                         ))}
 
-                        {/* Route Polyline */}
+                        {/* Route */}
                         {route.length > 0 && (
-                            <Polyline
-                                positions={[truckStart, ...route.map((r) => [r.latitude, r.longitude])]}
-                                color="#3ECF8E"
-                                weight={5}
-                            />
+                            <Polyline positions={route} color="#ee0808ff" weight={5} />
                         )}
                     </MapContainer>
                 </div>
 
                 {route.length > 0 && (
                     <div className="mt-2 text-slate-300">
-                        Total Route Distance:{" "}
-                        <span className="font-semibold text-emerald-400">{totalDistance} km</span>
+                        Total Route Distance: <span className="font-semibold text-emerald-400">{totalDistance} km</span>
                     </div>
                 )}
             </CardContent>
